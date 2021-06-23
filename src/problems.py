@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.algorithms import MinimizationProblem
+from src.classes import MinimizationProblem
 
 # original function
 def rosenbrock(x):
