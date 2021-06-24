@@ -2,7 +2,7 @@ import numpy as np
 from src.classes import MinimizationProblem, IterationState
 from src.matrix_inversion import invert_matrix
 
-# calculates newton direction
+
 def newton_direction(
         x,
         problem: MinimizationProblem,
@@ -13,7 +13,7 @@ def newton_direction(
 
     :param x: Current approximated minimizer x
     :param problem: The problem we are trying to minimize.
-    :param prev_state: IterationState from previous minimization iteration
+    :param prev_state: IterationState from previous minimization iteration. May be None.
     :return: Returns an IterationState which represents the current executed iteration
     """
 
