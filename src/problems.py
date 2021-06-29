@@ -3,7 +3,7 @@ import numpy as np
 from src.classes import MinimizationProblem
 
 
-def create_quadratic_problem(n, random_state=None):
+def create_quadratic_problem(n, random_state=None, supply_gradient: bool = True, supply_hessian: bool = True):
     """
     Creates a quadratic problem of the form Ax=b with x element of the real numbers to the power n.
 
@@ -18,6 +18,8 @@ def create_quadratic_problem(n, random_state=None):
 
     :param n: Dimensionality of x
     :param random_state: (optional) Random state to enforce a specific seed and therefore determinism of the outcome.
+    :param supply_gradient: (bool) Whether to supply the gradient or not. Default to `True`.
+    :param supply_hessian: (bool) Whether to supply the gradient or not. Default to `True`.
     :return: a random quadratic MinimizationProblem of the form Ax=b
     """
 
@@ -72,9 +74,11 @@ def create_quadratic_problem(n, random_state=None):
     x0 = np.zeros(n)
 
     # Construct the final minimization problem and return it
-    return MinimizationProblem(f, d_f, d2_f, solution, x0)
+    return MinimizationProblem(f=f, solution=solution, x0=x0,
+                               gradient_f = d_f if supply_gradient else None, 
+                               hessian_f = d2_f if supply_hessian else None)
 
-def create_non_quadratic_problem(random_state=None):
+def create_non_quadratic_problem(random_state=None, supply_gradient: bool = True, supply_hessian: bool = True):
     """
     Creates a 1-dimensional non-quadratic problem of the form (x-a)*(x-b)*(x-c).
 
@@ -90,6 +94,8 @@ def create_non_quadratic_problem(random_state=None):
     local minimizer.
 
     :param random_state: (optional) Random state to enforce a specific seed and therefore determinism of the outcome.
+    :param supply_gradient: (bool) Whether to supply the gradient or not. Default to `True`.
+    :param supply_hessian: (bool) Whether to supply the gradient or not. Default to `True`.
     :return: a random non-quadratic MinimizationProblem of the form (x-a)*(x-b)*(x-c)
     """
 
@@ -139,4 +145,6 @@ def create_non_quadratic_problem(random_state=None):
     x0 = np.array([-20], dtype=np.float64)
 
     # Construct the final minimization problem and return it
-    return MinimizationProblem(f, d_f, d2_f, solution, x0)
+    return MinimizationProblem(f=f, solution=solution, x0=x0,
+                               gradient_f = d_f if supply_gradient else None,
+                               hessian_f = d2_f if supply_hessian else None)
