@@ -11,39 +11,95 @@ class MinimizationProblem:
 
     Args:
         f (Callable): The function (objective) we are trying to minimize.
-        gradient_f (Callable): The gradient function of f.
-        hessian_f (Callable): The hessian function of f.
         solution (list): The solution(s) to the minimization problem.
                              Might contain multiple if there are multiple local minimizers.
         x0 (list): The starting point for the minimization procedure.
+        gradient_f (Callable): The gradient function of f. Optional.
+        hessian_f (Callable): The hessian function of f. Optional.
     """
     f: Callable[[np.ndarray], np.ndarray]
-    gradient_f: Callable[[np.ndarray], np.ndarray]
-    hessian_f: Callable[[np.ndarray], np.ndarray]
     solution: np.ndarray
     x0: np.ndarray
+    gradient_f: Callable[[np.ndarray], np.ndarray] = None
+    hessian_f: Callable[[np.ndarray], np.ndarray] = None
 
-    # TODO improve
-    def calc_gradient_at(self,
-            f: Callable[[np.ndarray], np.ndarray],
-            x: np.ndarray) -> np.ndarray:
+    # Why do we pass f, when it is saved in the state?
+    def calc_gradient_at(self, f: Callable, x: np.ndarray) -> np.ndarray:
+        """Calculate gradient at point `x`. Uses an approximation, if the gradient is not explicitly known.
 
-        if self.gradient_f is not None:
-            return self.gradient_f(x)
+        Args:
+            f (Callable): Function. 
+            x (np.ndarray): Array representing some point in the domain of the function.
 
-        # TODO
-        raise NotImplementedError()
+        Returns:
+            np.ndarray: (Approxmiated or true) gradient at point `x`.
+        """
+
+        return (self.gradient_f or self._central_difference_gradient)(x)
+
+    def _central_difference_gradient(self, x: np.ndarray) -> np.ndarray:
+        """Approximate gradient as described in equation (8.7), called the 'central difference formula'.
+
+        Args:
+            x (np.ndarray): Function input.
+
+        Returns:
+            np.ndarray: Approximated gradient.
+        """
+        eps = self._find_epsilon(x)
+        eps_vectors =  np.eye(N=len(x)) * eps
+        return np.array([
+            (self.f(x + eps_vector) - self.f(x - eps_vector))/(2*eps) for eps_vector in eps_vectors
+        ])
 
     # TODO improve (maybe)
     def calc_hessian_at(self,
             f: Callable[[np.ndarray], np.ndarray],
             x: np.ndarray) -> np.ndarray:
+        return (self.hessian_f or self.hessian_approximation)(x)
 
-        if self.hessian_f is not None:
-            return self.hessian_f(x)
+    def hessian_approximation(self, x: np.ndarray) -> np.ndarray:
+        """Approximate Hessian based on equation (8.21) in the book.
 
-        # TODO
-        raise NotImplementedError()
+        Args:
+            x (np.ndarray): Point for which we approximate the function's Hessian.
+
+        Returns:
+            np.ndarray: Approximated Hessian.
+        """
+        eps = self._find_epsilon(x)
+        eps_vectors = np.eye(N=len(x)) * eps
+        
+        hess = np.array([
+            [self._hess_approx_num(x, eps_i, eps_j) for eps_i in eps_vectors]
+            for eps_j in eps_vectors
+        ]) / (eps**(2))
+        
+        return hess
+        
+    def _hess_approx_num(self, x: np.ndarray, eps_i: np.ndarray, eps_j: np.ndarray) -> float:
+        f = self.f
+        return f(x + eps_i + eps_j) - f(x + eps_i) - f(x + eps_j) + f(x)
+
+    def _find_epsilon(self, x: np.ndarray):
+        """Find computational error of the datatype of x and return it's square-root, as in equation (8.6).
+
+        Args:
+            x (np.ndarray): Array of which the datatype is considered.
+        """
+        try:
+            # Given the datatype of x, the below is the least number such that `1.0 + u != 1.0`.
+            u = np.finfo(x.dtype).eps
+
+        # x is an exact type, which throws an error; we use float64 instead, 
+        # as it is often the default when performing operations on ints which map to floats.
+        except (TypeError, ValueError): 
+            
+            u = np.finfo(np.float64).eps
+
+        epsilon = np.sqrt(u)
+
+        return epsilon
 
 
 @dataclass
