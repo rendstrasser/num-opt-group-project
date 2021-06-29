@@ -1,8 +1,6 @@
 import numpy as np
-from typing import Callable, Type
+from typing import Callable
 from dataclasses import dataclass
-
-from numpy.lib.function_base import gradient
 
 
 @dataclass
