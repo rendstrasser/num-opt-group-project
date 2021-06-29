@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Callable
+from typing import Callable, Type
 from dataclasses import dataclass
 
 from numpy.lib.function_base import gradient
@@ -37,9 +37,9 @@ class MinimizationProblem:
             np.ndarray: (Approxmiated or true) gradient at point `x`.
         """
 
-        return (self.gradient_f or self.central_difference_gradient)(x)
+        return (self.gradient_f or self._central_difference_gradient)(x)
 
-    def central_difference_gradient(self, x: np.ndarray) -> np.ndarray:
+    def _central_difference_gradient(self, x: np.ndarray) -> np.ndarray:
         """Approximate gradient as described in equation (8.7), called the 'central difference formula'.
 
         Args:
@@ -48,26 +48,57 @@ class MinimizationProblem:
         Returns:
             np.ndarray: Approximated gradient.
         """
-
-        # Given the datatype of x, the below is the least number such that `1.0 + eps != 1.0`.
-        eps = np.finfo(x.dtype).eps
-
+        eps = self._find_epsilon(x)
+        eps_vectors =  np.eye(N=len(x)) * eps
         return np.array([
-            (self.f(x + eps*unitvector) + self.f(x - eps*unitvector))/2*self.epsilon
-            for unitvector in np.eye(N=len(x))
+            (self.f(x + eps_vector) - self.f(x - eps_vector))/(2*eps) for eps_vector in eps_vectors
         ])
-        
 
     # TODO improve (maybe)
     def calc_hessian_at(self,
             f: Callable[[np.ndarray], np.ndarray],
             x: np.ndarray) -> np.ndarray:
+        return (self.hessian_f or self.hessian_approximation)(x)
 
-        if self.hessian_f is not None:
-            return self.hessian_f(x)
+    def hessian_approximation(self, x: np.ndarray) -> np.ndarray:
+        """Approximate Hessian based on equation (8.21) in the book.
 
-        # TODO
-        raise NotImplementedError()
+        Args:
+            x (np.ndarray): Point for which we approximate the function's Hessian.
+
+        Returns:
+            np.ndarray: Approximated Hessian.
+        """
+        eps = self._find_epsilon(x)
+        eps_vectors = np.eye(N=len(x)) * eps
+        return np.array([
+            [self._hess_approx_num(x, eps_i, eps_j) for eps_i in eps_vectors]
+            for eps_j in eps_vectors
+        ]) / (eps**2)
+        
+    def _hess_approx_num(self, x: np.ndarray, eps_i: np.ndarray, eps_j: np.ndarray) -> float:
+        f = self.f
+        return f(x + eps_i + eps_j) - f(x + eps_i) - f(x + eps_j) + f(x)
+
+    def _find_epsilon(self, x: np.ndarray):
+        """Find computational error of the datatype of x and return it's square-root, as in equation (8.6).
+
+        Args:
+            x (np.ndarray): Array of which the datatype is considered.
+        """
+        try:
+            # Given the datatype of x, the below is the least number such that `1.0 + u != 1.0`.
+            u = np.finfo(x.dtype).eps
+
+        # x is an exact type, which throws an error; we use float64 instead, 
+        # as it is often the default when performing operations on ints which map to floats.
+        except (TypeError, ValueError): 
+            
+            u = np.finfo(np.float64).eps
+
+        epsilon = np.sqrt(u)
+
+        return epsilon
 
 
 @dataclass
