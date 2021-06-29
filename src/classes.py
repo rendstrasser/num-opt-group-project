@@ -71,10 +71,13 @@ class MinimizationProblem:
         """
         eps = self._find_epsilon(x)
         eps_vectors = np.eye(N=len(x)) * eps
-        return np.array([
+        
+        hess = np.array([
             [self._hess_approx_num(x, eps_i, eps_j) for eps_i in eps_vectors]
             for eps_j in eps_vectors
-        ]) / (eps**2)
+        ]) / (eps**(2))
+        
+        return hess
         
     def _hess_approx_num(self, x: np.ndarray, eps_i: np.ndarray, eps_j: np.ndarray) -> float:
         f = self.f
