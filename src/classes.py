@@ -10,6 +10,8 @@ class MinimizationProblem:
     steepest descent, newton, quasi-newton and conjugate minimization.
 
     Args:
+        A (np.ndarray): Matrix A, used for solving the problem
+        b (np.ndarray): Vector b, used for solving the problem
         f (Callable): The function (objective) we are trying to minimize.
         solution (list): The solution(s) to the minimization problem.
                              Might contain multiple if there are multiple local minimizers.

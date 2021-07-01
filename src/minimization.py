@@ -7,15 +7,22 @@ from src.scaling import scaling_ruiz
 
 
 def scale_problem(problem):
-    
-    if problem.A is None:
+    """
+    This function creates a scaled problem in the quadratic case
+    E transforms the computed minimum back into the original space
+
+    :param problem: the problem (objective) that we want to minimize
+    :return: E, MinimizationProblem
+    """
+
+    if problem.A is None:  # we only scale quadratic problems
         return None, problem
     
-    D, E = scaling_ruiz(problem.A)
-#     D, E = scaling_sink(A)
-    A = D @ problem.A @ E
-    b = D @ problem.b
-#     E_inv = np.linalg.inv(E)  # change inverse to manual function
+    D, E = scaling_ruiz(problem.A)  # returns the matrices that transform the problem into the new space
+    A = D @ problem.A @ E  # defines the new A
+    b = D @ problem.b  # defines the new b
+
+    # the function and the derivatives need to be defined again since we changed our A and b
 
     def f(x):
         """
@@ -29,7 +36,6 @@ def scale_problem(problem):
 
     def d_f(x):
         """
-
         First derivative of function that we want to minimize.
         Calculates the gradient at x.
 
