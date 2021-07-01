@@ -3,10 +3,61 @@ from typing import Callable, Tuple
 
 from src.classes import MinimizationProblem, IterationState
 from src.stopping_criterion import check_stopping_criterion
+from src.scaling import scaling_ruiz
 
+
+def scale_problem(problem):
+    
+    if problem.A is None:
+        return None, problem
+    
+    D, E = scaling_ruiz(problem.A)
+#     D, E = scaling_sink(A)
+    A = D @ problem.A @ E
+    b = D @ problem.b
+#     E_inv = np.linalg.inv(E)  # change inverse to manual function
+
+    def f(x):
+        """
+        Function that we want to minimize (antiderivative of Ax-b)
+        Calculates the function value at x.
+
+        :param x: input x (1D list with n elements)
+        :return: scalar value at f(x)
+        """
+        return 1/2 * x @ A @ x - b @ x
+
+    def d_f(x):
+        """
+
+        First derivative of function that we want to minimize.
+        Calculates the gradient at x.
+
+        :param x: input x (1D list with n elements)
+        :return: 1D array at f'(x)
+        """
+        return A @ x - b
+
+    def d2_f(x):
+        """
+        Second derivative of function that we want to minimize.
+        Calculates the Hessian at x.
+
+        :param x: input x (1D list with n elements)
+        :return: 2D array at f''(x)
+        """
+        return A
+    
+    # Starting point x0 set to all 0
+    x0 = problem.x0  # we define the point in the new space as the point in the original space
+    solution = problem.solution
+    
+    return E, MinimizationProblem(A=A, b=b, f=f, solution=solution, x0=x0,
+                               gradient_f = d_f if problem.gradient_f else None, 
+                               hessian_f = d2_f if problem.hessian_f else None)
 
 def find_minimizer(
-        problem: MinimizationProblem,
+        problem_orignal: MinimizationProblem,
         direction_method: Callable[[np.ndarray, MinimizationProblem, IterationState], IterationState],
         a0=1,
         tolerance=1e-5,
@@ -25,6 +76,8 @@ def find_minimizer(
     :return: the minimizer x and a list of the L2 gradient norms for all iterations
     """
 
+    E, problem = scale_problem(problem_orignal)
+    
     # We choose the starting point as defined in the minimization problem
     x = problem.x0
 
@@ -39,9 +92,12 @@ def find_minimizer(
     for i in range(max_iter):
         # Perform the backtracking line search at the current point x
         x, new_direction_state = backtracking_line_search(problem, x, direction_state, direction_method, a0)
-
+        
+        if i == 0:
+            first_direction_state = new_direction_state
+            
         # Evaluate if a stopping criterion is fulfilled, which allows us to early exit the minimization procedure
-        stopping_criteria_met, grad_norm = check_stopping_criterion(direction_state, new_direction_state, tolerance)
+        stopping_criteria_met, grad_norm = check_stopping_criterion(problem, direction_state, first_direction_state, new_direction_state, tolerance)
 
         # Append the L2 gradient norm to the list of gradient norms, which is returned at the end.
         gradients.append(grad_norm)
@@ -53,6 +109,8 @@ def find_minimizer(
         # Remember the current iteration state as the previous one for the next iteration.
         direction_state = new_direction_state
 
+    if E is not None:
+        x = E @ x
     # Return the approximated minimizer x and the L2 gradient norms for the iterations
     return x, gradients
 

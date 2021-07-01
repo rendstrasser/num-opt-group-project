@@ -17,6 +17,8 @@ class MinimizationProblem:
         gradient_f (Callable): The gradient function of f. Optional.
         hessian_f (Callable): The hessian function of f. Optional.
     """
+    A: np.ndarray
+    b: np.ndarray
     f: Callable[[np.ndarray], np.ndarray]
     solution: np.ndarray
     x0: np.ndarray

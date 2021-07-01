@@ -74,7 +74,7 @@ def create_quadratic_problem(n, random_state=None, supply_gradient: bool = True,
     x0 = np.zeros(n)
 
     # Construct the final minimization problem and return it
-    return MinimizationProblem(f=f, solution=solution, x0=x0,
+    return MinimizationProblem(A=A, b=b, f=f, solution=solution, x0=x0,
                                gradient_f = d_f if supply_gradient else None, 
                                hessian_f = d2_f if supply_hessian else None)
 
@@ -145,6 +145,6 @@ def create_non_quadratic_problem(random_state=None, supply_gradient: bool = True
     x0 = np.array([-20], dtype=np.float64)
 
     # Construct the final minimization problem and return it
-    return MinimizationProblem(f=f, solution=solution, x0=x0,
+    return MinimizationProblem(A=None, b=None, f=f, solution=solution, x0=x0,
                                gradient_f = d_f if supply_gradient else None,
                                hessian_f = d2_f if supply_hessian else None)
