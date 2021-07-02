@@ -31,16 +31,16 @@ def create_quadratic_problem(n, random_state=None, settings=MinimizationProblemS
     # Sample a generator matrix for A randomly
     A_generator = np.random.randint(low=1, high=10, size=(n, n))
 
+    if settings.degenerate_problem:  # if we want to degenerate the problem
+        scaling_matrix = np.identity(A_generator.shape[0])  # initialize a scaling matrix
+        scaling_matrix[0, 0] = 100  # set one element much larger than the others
+        A_generator = scaling_matrix @ A_generator  # multiply with old A
+
     # Calculate A_gen*A_gen^T to ensure positive-(semi-)definite matrix
     A = A_generator @ A_generator.T
 
     # Sample a solution x randomly
     solution = np.random.randint(low=1, high=10, size=n)
-
-    if settings.degenerate_problem:  # if we want to degenerate the problem
-        scaling_matrix = np.identity(A.shape[0])  # initialize a scaling matrix
-        scaling_matrix[0, 0] = 1000  # set one element much larger than the others
-        A = scaling_matrix @ A  # multiply with old A
 
     # Calculate b
     b = A @ solution
