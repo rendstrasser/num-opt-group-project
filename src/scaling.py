@@ -1,5 +1,67 @@
 import numpy as np
 
+from src.classes import MinimizationProblem
+
+
+def scale_problem(problem):
+    """
+    This function creates a scaled problem in the quadratic case
+    E transforms the computed minimum back into the original space.
+
+    :param problem: the problem (objective) that we want to minimize
+    :return: a descaling matrix E and the problem formulated as a rescaled variant
+    """
+
+    if not problem.settings.variable_scaling_enabled:
+        return None, problem
+
+    if problem.A is None:  # we only scale quadratic problems
+        return None, problem
+
+    D, E = scaling_ruiz(problem.A)  # returns the matrices that transform the problem into the new space
+    A = D @ problem.A @ E  # defines the new A
+    b = D @ problem.b  # defines the new b
+
+    # the function and the derivatives need to be defined again since we changed our A and b
+
+    def f(x):
+        """
+        Function that we want to minimize (antiderivative of Ax-b)
+        Calculates the function value at x.
+
+        :param x: input x (1D list with n elements)
+        :return: scalar value at f(x)
+        """
+        return 1/2 * x @ A @ x - b @ x
+
+    def d_f(x):
+        """
+        First derivative of function that we want to minimize.
+        Calculates the gradient at x.
+
+        :param x: input x (1D list with n elements)
+        :return: 1D array at f'(x)
+        """
+        return A @ x - b
+
+    def d2_f(x):
+        """
+        Second derivative of function that we want to minimize.
+        Calculates the Hessian at x.
+
+        :param x: input x (1D list with n elements)
+        :return: 2D array at f''(x)
+        """
+        return A
+
+    # we define the starting point in the new space as the starting point in the original space
+    x0 = problem.x0
+
+    return E, MinimizationProblem(A=A, b=b, f=f, solution=problem.solution, x0=x0,
+                                  settings=problem.settings,
+                                  gradient_f=d_f if problem.gradient_f else None,
+                                  hessian_f=d2_f if problem.hessian_f else None)
+
 
 def scaling_ruiz(A):
     """

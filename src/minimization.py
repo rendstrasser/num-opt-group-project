@@ -3,68 +3,7 @@ from typing import Callable, Tuple
 
 from src.classes import MinimizationProblem, IterationState
 from src.stopping_criterion import check_stopping_criterion
-from src.scaling import scaling_ruiz
-
-
-def scale_problem(problem):
-    """
-    This function creates a scaled problem in the quadratic case
-    E transforms the computed minimum back into the original space
-
-    :param problem: the problem (objective) that we want to minimize
-    :return: E, MinimizationProblem
-    """
-
-    if not problem.settings.variable_scaling_enabled:
-        return None, problem
-
-    if problem.A is None:  # we only scale quadratic problems
-        return None, problem
-    
-    D, E = scaling_ruiz(problem.A)  # returns the matrices that transform the problem into the new space
-    A = D @ problem.A @ E  # defines the new A
-    b = D @ problem.b  # defines the new b
-
-    # the function and the derivatives need to be defined again since we changed our A and b
-
-    def f(x):
-        """
-        Function that we want to minimize (antiderivative of Ax-b)
-        Calculates the function value at x.
-
-        :param x: input x (1D list with n elements)
-        :return: scalar value at f(x)
-        """
-        return 1/2 * x @ A @ x - b @ x
-
-    def d_f(x):
-        """
-        First derivative of function that we want to minimize.
-        Calculates the gradient at x.
-
-        :param x: input x (1D list with n elements)
-        :return: 1D array at f'(x)
-        """
-        return A @ x - b
-
-    def d2_f(x):
-        """
-        Second derivative of function that we want to minimize.
-        Calculates the Hessian at x.
-
-        :param x: input x (1D list with n elements)
-        :return: 2D array at f''(x)
-        """
-        return A
-    
-    # Starting point x0 set to all 0
-    x0 = problem.x0  # we define the point in the new space as the point in the original space
-    solution = problem.solution
-    
-    return E, MinimizationProblem(A=A, b=b, f=f, solution=solution, x0=x0,
-                                  settings=problem.settings,
-                                  gradient_f=d_f if problem.gradient_f else None,
-                                  hessian_f=d2_f if problem.hessian_f else None)
+from src.scaling import scale_problem
 
 
 def find_minimizer(
@@ -87,6 +26,9 @@ def find_minimizer(
     :return: the minimizer x and a list of the L2 gradient norms for all iterations
     """
 
+    # Applies variable scaling to the problem
+    # Gives a matrix E that can be used to unscale the variables
+    # and the new scaled problem that needs to be solved
     E, problem = scale_problem(original_problem)
     
     # We choose the starting point as defined in the minimization problem
@@ -120,8 +62,10 @@ def find_minimizer(
         # Remember the current iteration state as the previous one for the next iteration.
         direction_state = new_direction_state
 
+    # invert variable scaling after minimization procedure, if we actually scaled the variables
     if E is not None:
         x = E @ x
+
     # Return the approximated minimizer x and the L2 gradient norms for the iterations
     return x, gradients
 

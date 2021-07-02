@@ -48,11 +48,10 @@ class MinimizationProblem:
     hessian_f: Callable[[np.ndarray], np.ndarray] = None
 
     # Why do we pass f, when it is saved in the state?
-    def calc_gradient_at(self, f: Callable, x: np.ndarray) -> np.ndarray:
+    def calc_gradient_at(self, x: np.ndarray) -> np.ndarray:
         """Calculate gradient at point `x`. Uses an approximation, if the gradient is not explicitly known.
 
         Args:
-            f (Callable): Function. 
             x (np.ndarray): Array representing some point in the domain of the function.
 
         Returns:
@@ -71,14 +70,12 @@ class MinimizationProblem:
             np.ndarray: Approximated gradient.
         """
         eps = self._find_epsilon(x)
-        eps_vectors =  np.eye(N=len(x)) * eps
+        eps_vectors = np.eye(N=len(x)) * eps
         return np.array([
             (self.f(x + eps_vector) - self.f(x - eps_vector))/(2*eps) for eps_vector in eps_vectors
         ])
 
-
     def calc_hessian_at(self,
-            f: Callable[[np.ndarray], np.ndarray],
             x: np.ndarray) -> np.ndarray:
         return (self.hessian_f or self.hessian_approximation)(x)
 

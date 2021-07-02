@@ -18,7 +18,7 @@ def bfgs_quasi_newton_direction(
 
     I = np.identity(len(x))
     H = I
-    grad = problem.calc_gradient_at(problem.f, x)
+    grad = problem.calc_gradient_at(x)
 
     if prev_state is not None:
         s = x - prev_state.x

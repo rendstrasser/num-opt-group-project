@@ -17,9 +17,9 @@ def newton_direction(
     :return: Returns an IterationState which represents the current executed iteration
     """
 
-    hessian = problem.calc_hessian_at(problem.f, x)
+    hessian = problem.calc_hessian_at(x)
     hessian_inv = invert_matrix(hessian, problem.settings.custom_matrix_inversion_enabled)
-    grad = problem.calc_gradient_at(problem.f, x)
+    grad = problem.calc_gradient_at(x)
     p = -hessian_inv @ grad
 
     return IterationState(x, p, grad)

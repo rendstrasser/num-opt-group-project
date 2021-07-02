@@ -1,9 +1,14 @@
 import numpy as np
 
-from src.classes import MinimizationProblem
+from src.classes import MinimizationProblem, IterationState
 
-# TODO improve
-def check_stopping_criterion(problem: MinimizationProblem, prev_direction_state, first_direction_state, new_direction_state, tolerance):
+
+def check_stopping_criterion(
+        problem: MinimizationProblem,
+        prev_direction_state: IterationState,
+        first_direction_state: IterationState,
+        new_direction_state: IterationState,
+        tolerance: float):
     """
     This function determines if the minimization process should be stopped, based on multiple criteria
 

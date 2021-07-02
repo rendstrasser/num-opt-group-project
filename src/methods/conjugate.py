@@ -16,7 +16,7 @@ def fr_conjugate_direction(
     :return: Returns an IterationState which represents the current executed iteration
     """
 
-    grad = problem.calc_gradient_at(problem.f, x)
+    grad = problem.calc_gradient_at(x)
     p = -grad
 
     if prev_state is not None:
