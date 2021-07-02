@@ -2,14 +2,19 @@ import numpy as np
 
 
 # TODO improve
-def invert_matrix(matrix: np.ndarray) -> np.ndarray:
+def invert_matrix(matrix: np.ndarray, custom_matrix_inversion_enabled: bool) -> np.ndarray:
     # does matrix inversion using the Gauss-Jordan Algorithm
     # returns the inverse matrix
     # requires the input matrix to have the same number of rows as columns
 
-    if len(matrix)!=len(matrix[0]):
+    if len(matrix) != len(matrix[0]):
         raise ValueError("Matrix must have same number of rows as columns to be invertible")
-    inverse=np.identity(len(matrix))
+
+    if not custom_matrix_inversion_enabled:
+        return np.linalg.inv(matrix)
+
+    inverse = np.identity(len(matrix))
+
     #do inversion for lower left part
     for j, column in enumerate(np.transpose(matrix)):
         for i, row in enumerate(matrix):
