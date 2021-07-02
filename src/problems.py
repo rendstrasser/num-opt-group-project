@@ -37,6 +37,11 @@ def create_quadratic_problem(n, random_state=None, settings=MinimizationProblemS
     # Sample a solution x randomly
     solution = np.random.randint(low=1, high=10, size=n)
 
+    if settings.degenerate_problem:  # if we want to degenerate the problem
+        scaling_matrix = np.identity(A.shape[0])  # initialize a scaling matrix
+        scaling_matrix[0, 0] = 1000  # set one element much larger than the others
+        A = scaling_matrix @ A  # multiply with old A
+
     # Calculate b
     b = A @ solution
 
