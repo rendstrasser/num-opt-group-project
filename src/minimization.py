@@ -15,6 +15,9 @@ def scale_problem(problem):
     :return: E, MinimizationProblem
     """
 
+    if not problem.settings.variable_scaling_enabled:
+        return None, problem
+
     if problem.A is None:  # we only scale quadratic problems
         return None, problem
     
@@ -59,11 +62,13 @@ def scale_problem(problem):
     solution = problem.solution
     
     return E, MinimizationProblem(A=A, b=b, f=f, solution=solution, x0=x0,
-                               gradient_f = d_f if problem.gradient_f else None, 
-                               hessian_f = d2_f if problem.hessian_f else None)
+                                  settings=problem.settings,
+                                  gradient_f=d_f if problem.gradient_f else None,
+                                  hessian_f=d2_f if problem.hessian_f else None)
+
 
 def find_minimizer(
-        problem_orignal: MinimizationProblem,
+        original_problem: MinimizationProblem,
         direction_method: Callable[[np.ndarray, MinimizationProblem, IterationState], IterationState],
         a0=1,
         tolerance=1e-5,
@@ -72,7 +77,7 @@ def find_minimizer(
     Executes a minimization procedure on a given problem with a given direction method
     until a local minimizer is found or we reach the maximum number of iterations.
 
-    :param problem: the problem (objective) that we want to minimize
+    :param original_problem: the problem (objective) that we want to minimize
     :param direction_method: method which takes an input x, the minimization problem
                              and an iteration state to calculate another iteration state;
                              i.e., calculates the direction p for an input x and a minimization problem
@@ -82,7 +87,7 @@ def find_minimizer(
     :return: the minimizer x and a list of the L2 gradient norms for all iterations
     """
 
-    E, problem = scale_problem(problem_orignal)
+    E, problem = scale_problem(original_problem)
     
     # We choose the starting point as defined in the minimization problem
     x = problem.x0

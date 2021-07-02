@@ -2,6 +2,25 @@ import numpy as np
 from typing import Callable
 from dataclasses import dataclass
 
+@dataclass
+class MinimizationProblemSettings:
+    """
+    Data class containing settings to activate/deactivate newly
+    implemented features for project phase 2.
+
+    Args:
+        gradient_approximation_enabled (bool): Enables approximation of gradients as described in equation (8.7) in the book.
+        hessian_approximation_enabled (bool): Enables approximation of hessians as described in equation (8.7) in the book.
+        custom_matrix_inversion_enabled (bool): Enables custom matrix inversion TODO ref book
+        variable_scaling_enabled (bool): Enables variable scaling inversion TODO ref book
+        advanced_stopping_criteria_enabled (bool): Advanced stopping criteria enabled as described in the PDF of phase 2
+    """
+    gradient_approximation_enabled: bool = False
+    hessian_approximation_enabled: bool = False
+    custom_matrix_inversion_enabled: bool = True
+    variable_scaling_enabled: bool = True
+    advanced_stopping_criteria_enabled: bool = True
+
 
 @dataclass
 class MinimizationProblem:
@@ -24,6 +43,7 @@ class MinimizationProblem:
     f: Callable[[np.ndarray], np.ndarray]
     solution: np.ndarray
     x0: np.ndarray
+    settings: MinimizationProblemSettings = MinimizationProblemSettings()
     gradient_f: Callable[[np.ndarray], np.ndarray] = None
     hessian_f: Callable[[np.ndarray], np.ndarray] = None
 
@@ -56,7 +76,7 @@ class MinimizationProblem:
             (self.f(x + eps_vector) - self.f(x - eps_vector))/(2*eps) for eps_vector in eps_vectors
         ])
 
-    # TODO improve (maybe)
+
     def calc_hessian_at(self,
             f: Callable[[np.ndarray], np.ndarray],
             x: np.ndarray) -> np.ndarray:

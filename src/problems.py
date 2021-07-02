@@ -1,9 +1,9 @@
 import numpy as np
 
-from src.classes import MinimizationProblem
+from src.classes import MinimizationProblem, MinimizationProblemSettings
 
 
-def create_quadratic_problem(n, random_state=None, supply_gradient: bool = True, supply_hessian: bool = True):
+def create_quadratic_problem(n, random_state=None, settings=MinimizationProblemSettings()):
     """
     Creates a quadratic problem of the form Ax=b with x element of the real numbers to the power n.
 
@@ -16,6 +16,7 @@ def create_quadratic_problem(n, random_state=None, supply_gradient: bool = True,
 
     We choose the starting point x0 to be all 0.
 
+    :param settings: Settings for the minimization problem
     :param n: Dimensionality of x
     :param random_state: (optional) Random state to enforce a specific seed and therefore determinism of the outcome.
     :param supply_gradient: (bool) Whether to supply the gradient or not. Default to `True`.
@@ -75,10 +76,12 @@ def create_quadratic_problem(n, random_state=None, supply_gradient: bool = True,
 
     # Construct the final minimization problem and return it
     return MinimizationProblem(A=A, b=b, f=f, solution=solution, x0=x0,
-                               gradient_f = d_f if supply_gradient else None, 
-                               hessian_f = d2_f if supply_hessian else None)
+                               settings=settings,
+                               gradient_f=d_f if not settings.gradient_approximation_enabled else None,
+                               hessian_f=d2_f if not settings.hessian_approximation_enabled else None)
 
-def create_non_quadratic_problem(random_state=None, supply_gradient: bool = True, supply_hessian: bool = True):
+
+def create_non_quadratic_problem(random_state=None, settings=MinimizationProblemSettings()):
     """
     Creates a 1-dimensional non-quadratic problem of the form (x-a)*(x-b)*(x-c).
 
@@ -146,5 +149,6 @@ def create_non_quadratic_problem(random_state=None, supply_gradient: bool = True
 
     # Construct the final minimization problem and return it
     return MinimizationProblem(A=None, b=None, f=f, solution=solution, x0=x0,
-                               gradient_f = d_f if supply_gradient else None,
-                               hessian_f = d2_f if supply_hessian else None)
+                               settings=settings,
+                               gradient_f=d_f if not settings.gradient_approximation_enabled else None,
+                               hessian_f=d2_f if not settings.hessian_approximation_enabled else None)

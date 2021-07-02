@@ -18,7 +18,7 @@ def newton_direction(
     """
 
     hessian = problem.calc_hessian_at(problem.f, x)
-    hessian_inv = invert_matrix(hessian)
+    hessian_inv = invert_matrix(hessian, problem.settings.custom_matrix_inversion_enabled)
     grad = problem.calc_gradient_at(problem.f, x)
     p = -hessian_inv @ grad
 

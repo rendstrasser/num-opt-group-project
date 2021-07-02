@@ -1,8 +1,9 @@
 import numpy as np
 
+from src.classes import MinimizationProblem
 
 # TODO improve
-def check_stopping_criterion(problem, prev_direction_state, first_direction_state, new_direction_state, tolerance):
+def check_stopping_criterion(problem: MinimizationProblem, prev_direction_state, first_direction_state, new_direction_state, tolerance):
     """
     This function determines if the minimization process should be stopped, based on multiple criteria
 
@@ -15,9 +16,13 @@ def check_stopping_criterion(problem, prev_direction_state, first_direction_stat
     :return: bool (True if we should stop, else False), grad_norm (norm of gradient)
     """
 
-    tolerance = 10**-8  # default tolerance is 10**-5 (only for debugging)
-
     grad_norm = np.linalg.norm(new_direction_state.gradient)  # norm of gradient
+
+    if not problem.settings.advanced_stopping_criteria_enabled:
+        if grad_norm < tolerance:
+            return True, grad_norm
+
+        return False, grad_norm
 
     x0 = problem.x0  # starting position
     f0 = problem.f(x0)  # function value at starting position
