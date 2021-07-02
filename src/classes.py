@@ -55,7 +55,7 @@ class MinimizationProblem:
             x (np.ndarray): Array representing some point in the domain of the function.
 
         Returns:
-            np.ndarray: (Approxmiated or true) gradient at point `x`.
+            np.ndarray: (Approximated or true) gradient at point `x`.
         """
 
         return (self.gradient_f or self._central_difference_gradient)(x)
@@ -72,11 +72,11 @@ class MinimizationProblem:
         eps = self._find_epsilon(x)
         eps_vectors = np.eye(N=len(x)) * eps
         return np.array([
-            (self.f(x + eps_vector) - self.f(x - eps_vector))/(2*eps) for eps_vector in eps_vectors
+            (self.f(x + eps_vector) - self.f(x - eps_vector)) / (2 * eps) for eps_vector in eps_vectors
         ])
 
     def calc_hessian_at(self,
-            x: np.ndarray) -> np.ndarray:
+                        x: np.ndarray) -> np.ndarray:
         return (self.hessian_f or self.hessian_approximation)(x)
 
     def hessian_approximation(self, x: np.ndarray) -> np.ndarray:
@@ -90,25 +90,25 @@ class MinimizationProblem:
         """
         eps = self._find_epsilon(x)
         eps_vectors = np.eye(N=len(x)) * eps
-        
+
         hess = np.array([
             [self._hess_approx_num(x, eps_i, eps_j) for eps_i in eps_vectors]
             for eps_j in eps_vectors
-        ]) / (eps**2)
-        
+        ]) / (eps ** 2)
 
         # If the hessian approximation is basically 0, we are already close.
         # Avoids SingularMatrix errors.
-        if sum(abs(x) for row in hess for x in row) < 0.0001: 
+        if sum(abs(entry) for row in hess for entry in row) < 0.0001:
             return np.eye(len(x))
 
         return hess
-        
+
     def _hess_approx_num(self, x: np.ndarray, eps_i: np.ndarray, eps_j: np.ndarray) -> float:
         f = self.f
         return f(x + eps_i + eps_j) - f(x + eps_i) - f(x + eps_j) + f(x)
 
-    def _find_epsilon(self, x: np.ndarray):
+    @staticmethod
+    def _find_epsilon(x: np.ndarray):
         """Find computational error of the datatype of x and return it's square-root, as in equation (8.6).
 
         Args:
@@ -120,8 +120,8 @@ class MinimizationProblem:
 
         # x is an exact type, which throws an error; we use float64 instead, 
         # as it is often the default when performing operations on ints which map to floats.
-        except (TypeError, ValueError): 
-            
+        except (TypeError, ValueError):
+
             u = np.finfo(np.float64).eps
 
         epsilon = np.sqrt(u)
@@ -158,6 +158,6 @@ class BfgsQuasiNewtonState(IterationState):
         direction (list): The calculated direction (p) of a specific iteration.
         gradient (list): The calculated gradient at x at a specific iteration.
         H: (2D list): The H that was used to calculate the direction (p).
-                      Stored in the state to avoid recomputation at the next iteration.
+                      Stored in the state to avoid re-computation at the next iteration.
     """
     H: np.ndarray
