@@ -5,7 +5,8 @@ from src.classes import MinimizationProblem
 
 def scale_problem(problem):
     """
-    This function creates a scaled problem in the quadratic case
+    This function creates a scaled problem in the quadratic case.
+    Uses the Ruiz algorithm presented in https://arxiv.org/abs/1610.03871 at Algorithm 2.
     E transforms the computed minimum back into the original space.
 
     :param problem: the problem (objective) that we want to minimize
@@ -66,7 +67,8 @@ def scale_problem(problem):
 def scaling_ruiz(A):
     """
     This function computes the matrices D and E that scale the problem to attain rows and columns that are
-    normalized to 1
+    normalized to 1.
+    Uses the Ruiz algorithm presented in https://arxiv.org/abs/1610.03871 at Algorithm 2.
 
     :param A: matrix A, that is being rescaled
     :return: D, E

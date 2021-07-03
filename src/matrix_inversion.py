@@ -1,79 +1,90 @@
 import numpy as np
 from mpmath import mp
 from mpmath import matrix as mpmatrix
+from typing import Tuple
 
 
-def invert_matrix(matrix: np.ndarray, custom_matrix_inversion_enabled: bool) -> np.ndarray:
-    # does matrix inversion using the Gauss-Jordan Algorithm
-    # returns the inverse matrix
-    # requires the input matrix to have the same number of rows as columns
+def invert_matrix(A: np.ndarray, custom_matrix_inversion_enabled: bool) -> np.ndarray:
+    """Compute the inverse of a square matrix
 
-    # we use mpmath here as we require the floating point precision for our matrix inversion
-    matrix = mpmatrix(matrix)
-
-    if matrix.cols != matrix.rows:
-        raise ValueError("Matrix must have same number of rows as columns to be invertible")
+    :param A: A non-singular n-by-n matrix
+    :type A: numpy.ndarray
+    :return: The inverse of ``A``
+    :rtype: numpy.ndarray
+    """
 
     if not custom_matrix_inversion_enabled:
-        return np.array(mp.inverse(matrix).tolist(), dtype=np.float64)
+        return np.linalg.inv(A)
 
-    inverse = mp.eye(len(matrix))
+    if not isinstance(A, np.ndarray):
+        raise TypeError("'A' must be of type numpy.ndarray")
 
-    # do inversion for lower left part
-    for j in range(matrix.cols):
-        for i in range(matrix.rows):
-            if i > j:
-                v = matrix[i, j]
-                matrix[i, :] -= v * matrix[j, :]
-                inverse[i, :] -= v * inverse[j, :]
-                continue
+    if len(A.shape) > 2:
+        raise ValueError("'A' must be two-dimensional")
 
-            if i == j:
-                v = matrix[i, j]
+    n, m = A.shape
 
-                # diagonal elements will be adjusted all entries on the left are 0.
-                # what is left is to get the diagonal to be 1
-                if v != 0:
-                    matrix[i, :] /= v
-                    inverse[i, :] /= v
+    if n != m:
+        raise ValueError("'A' must be square")
 
-                # as diagonal is 0, we need to adjust the rows of the matrix in order
-                # to get have a non-zero diagonal entry (which is required for invertible matrices)
-                else:
-                    for x in range(j + 1, matrix.cols):
-                        v = matrix[x, j]
-                        if v != 0:
-                            matrix[i, :] += (matrix[x, :] / v)
-                            inverse[i, :] += (inverse[x, :] / v)
-                            break
-                    # exit with value 0 implies non-invertible matrix
-                    if v == 0:
-                        raise ValueError("Matrix is not invertible")
-                continue
+    A = A.astype(float)
+    LU, P = _lup_decompose(A)
+    B = np.dot(P, np.eye(n))
+    X = _lup_solve(LU, B)
 
-    # do inversion for upper right part:
-    for j in reversed(range(matrix.cols)):
-        for i in reversed(range(matrix.rows)):
-            if i < j:
-                v = matrix[i, j]
-                matrix[i, :] -= v * matrix[j, :]
-                inverse[i, :] -= v * inverse[j, :]
+    return X
 
-    # convert back to numpy
-    inverse = np.array(inverse.tolist(), dtype=np.float64)
-    return inverse
+def _lup_decompose(A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute the LU decomposition with partial pivoting (LUP) of a square matrix
 
+    See `Algorithm A.1` and `Wikipedia <https://en.wikipedia.org/wiki/LU_decomposition>`.
 
-if __name__ == "__main__":
-    mp.mps = 40
-    A = np.array([[1, 2, 3], [5, 2, 4], [3, 5, 1]])
-    correct_inverse = invert_matrix(A, custom_matrix_inversion_enabled=False)
-    custom_inverse = invert_matrix(A, custom_matrix_inversion_enabled=True)
-    print("Correct")
-    print(correct_inverse)
-    print("Custom")
-    print(custom_inverse)
+    :param A: ``A`` as described in :func:`invert`
+    :type A: numpy.ndarray
+    :return: The combined lower and upper triangular n-by-n matrix, the n-by-n permutation matrix
+    :rtype: Tuple[np.ndarray, np.ndarray]
+    """
 
-    print("==============\nDifference:")
-    print(correct_inverse - custom_inverse)
+    n = len(A)
+    LU, P = np.copy(A), np.eye(n)
 
+    for i in range(n - 1):
+        # Find maximum pivot in column
+        j = i + np.argmax(np.abs(LU[i:, i]))
+
+        if np.abs(LU[i, j]) < 10e-6:
+            raise ValueError("'A' must be non-singular")
+
+        # Permute rows
+        LU[[i, j]], P[[i, j]] = LU[[j, i]], P[[j, i]]
+
+        # Perform Gaussian elimination
+        LU[i+1 :, i] /= LU[i, i]
+        LU[i+1 :, i+1 :] -= np.outer(LU[i+1 :, i], LU[i, i+1 :])
+
+    return LU, P
+
+def _lup_solve(LU: np.ndarray, B: np.ndarray) -> np.ndarray:
+    """Solve a system of linear equations by forward and backward substitution
+
+    :param LU: ``LU`` as returned by :func:`_lup_decompose`
+    :type LU: numpy.ndarray
+    :param B: A n-by-m matrix
+    :type B: numpy.ndarray
+    :return: The n-by-m solution matrix
+    :rtype: numpy.ndarray
+    """
+
+    n = len(LU)
+    X = np.copy(B)
+
+    # Forward substitution
+    for i in range(n):
+        X[i] -= np.dot(LU[i, :i], X[:i])
+
+    # Backward substitution
+    for i in reversed(range(n)):
+        X[i] -= np.dot(LU[i, i+1 :], X[i+1 :])
+        X[i] /= LU[i,i]
+
+    return X
