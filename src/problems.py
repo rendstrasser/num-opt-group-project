@@ -31,7 +31,8 @@ def create_quadratic_problem(n, random_state=None, settings=MinimizationProblemS
     # Sample a generator matrix for A randomly
     A_generator = np.random.randint(low=1, high=10, size=(n, n))
 
-    if settings.degenerate_problem:  # if we want to degenerate the problem
+    # If we want to degenerate the problem(interesting for testing variable scaling)
+    if settings.degenerate_problem:  # 
         scaling_matrix = np.identity(A_generator.shape[0])  # initialize a scaling matrix
         scaling_matrix[0, 0] = 100  # set one element much larger than the others
         A_generator = scaling_matrix @ A_generator  # multiply with old A
@@ -44,6 +45,12 @@ def create_quadratic_problem(n, random_state=None, settings=MinimizationProblemS
 
     # Calculate b
     b = A @ solution
+
+    # If we want to scale the problem (interesting for testing advanced stopping criteria)
+    if settings.scale_problem:
+        scale_factor = 1e5
+        A = scale_factor * A
+        b = scale_factor * b
 
     def f(x):
         """

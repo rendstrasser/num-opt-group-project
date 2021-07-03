@@ -14,7 +14,8 @@ class MinimizationProblemSettings:
         custom_matrix_inversion_enabled (bool): Enables custom matrix inversion TODO ref book
         variable_scaling_enabled (bool): Enables variable scaling inversion TODO ref book
         advanced_stopping_criteria_enabled (bool): Advanced stopping criteria enabled as described in the PDF of phase 2
-        degenerate_problem (bool): Transforms problem into a poorly scaled problem
+        degenerate_problem (bool): (only for quadratic problems) Transforms problem into a degenerated problem by scaling first row/column of A by 100
+        scale_problem (bool): (only for quadratic problems) Transforms problem into a scaled problem by scaling A and b by 10^5
     """
     gradient_approximation_enabled: bool = False
     hessian_approximation_enabled: bool = False
@@ -22,6 +23,7 @@ class MinimizationProblemSettings:
     variable_scaling_enabled: bool = False
     advanced_stopping_criteria_enabled: bool = True
     degenerate_problem: bool = False
+    scale_problem: bool = False
 
 
 @dataclass
