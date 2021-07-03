@@ -11,8 +11,8 @@ class MinimizationProblemSettings:
     Args:
         gradient_approximation_enabled (bool): Enables approximation of gradients as described in equation (8.7) in the book.
         hessian_approximation_enabled (bool): Enables approximation of hessians as described in equation (8.7) in the book.
-        custom_matrix_inversion_enabled (bool): Enables custom matrix inversion TODO ref book
-        variable_scaling_enabled (bool): Enables variable scaling inversion TODO ref book
+        custom_matrix_inversion_enabled (bool): Enables custom matrix inversion as described in algorithm (A.1) in the book
+        variable_scaling_enabled (bool): Enables variable scaling inversion for quadratic problems using the Ruiz algorithm presented in https://arxiv.org/pdf/1610.03871.pdf
         advanced_stopping_criteria_enabled (bool): Advanced stopping criteria enabled as described in the PDF of phase 2
         degenerate_problem (bool): (only for quadratic problems) Transforms problem into a degenerated problem by scaling first row/column of A by 100
         scale_problem (bool): (only for quadratic problems) Transforms problem into a scaled problem by scaling A and b by 10^5

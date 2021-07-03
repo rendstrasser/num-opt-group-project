@@ -69,10 +69,8 @@ def find_minimizer(
     # Return the approximated minimizer x and the L2 gradient norms for the iterations
     return x, gradients
 
-
-# smallest stable floating point number (TODO probably obsolete with mpmath)
+# smallest stable floating point number
 _epsilon = np.sqrt(np.finfo(float).eps)
-
 
 # performs backtracking line search
 def backtracking_line_search(
@@ -109,7 +107,6 @@ def backtracking_line_search(
 
         if a * np.linalg.norm(p_state.direction) < _epsilon:
             # step must not become smaller than precision, early exit to ensure valid a
-            # TODO probably obsolete with mpmath
             break
 
     # Return the new approximated minimizer x and the IterationState of this iteration
