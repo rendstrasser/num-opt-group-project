@@ -8,6 +8,7 @@ def invert_matrix(matrix: np.ndarray, custom_matrix_inversion_enabled: bool) -> 
     # returns the inverse matrix
     # requires the input matrix to have the same number of rows as columns
 
+    # we use mpmath here as we require the floating point precision for our matrix inversion
     matrix = mpmatrix(matrix)
 
     if matrix.cols != matrix.rows:
