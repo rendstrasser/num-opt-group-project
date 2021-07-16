@@ -2,6 +2,8 @@ import numpy as np
 from typing import Callable
 from dataclasses import dataclass
 
+from src.gradient_approximation import gradient_approximation, hessian_approximation
+
 @dataclass
 class MinimizationProblemSettings:
     """
@@ -11,7 +13,8 @@ class MinimizationProblemSettings:
     Args:
         gradient_approximation_enabled (bool): Enables approximation of gradients as described in equation (8.7) in the book.
         hessian_approximation_enabled (bool): Enables approximation of hessians as described in equation (8.7) in the book.
-        custom_matrix_inversion_enabled (bool): Enables custom matrix inversion as described in algorithm (A.1) in the book
+        cholesky_linear_systems_solver_enabled (bool): Enables cholesky-based linear systems solving method as described in algorithm (A.2) in the book
+        gaussian_elimination_linear_systems_solver_enabled (bool): Enables gaussian elimination with partial row pivoting linear system solving method as described in algorithm (A.1) in the book
         variable_scaling_enabled (bool): Enables variable scaling inversion for quadratic problems using the Ruiz algorithm presented in https://arxiv.org/pdf/1610.03871.pdf
         advanced_stopping_criteria_enabled (bool): Advanced stopping criteria enabled as described in the PDF of phase 2
         degenerate_problem (bool): (only for quadratic problems) Transforms problem into a degenerated problem by scaling first row/column of A by 100
@@ -19,9 +22,10 @@ class MinimizationProblemSettings:
     """
     gradient_approximation_enabled: bool = False
     hessian_approximation_enabled: bool = False
-    custom_matrix_inversion_enabled: bool = True
+    cholesky_linear_systems_solver_enabled: bool = False
+    gaussian_elimination_linear_systems_solver_enabled: bool = False
     variable_scaling_enabled: bool = False
-    advanced_stopping_criteria_enabled: bool = True
+    advanced_stopping_criteria_enabled: bool = False
     degenerate_problem: bool = False
     scale_problem: bool = False
 
@@ -62,75 +66,27 @@ class MinimizationProblem:
             np.ndarray: (Approximated or true) gradient at point `x`.
         """
 
-        return (self.gradient_f or self._central_difference_gradient)(x)
+        if self.gradient_f:
+            # if the problem has knowledge about the gradient, use it directly without approximation
+            return self.gradient_f(x)
 
-    def _central_difference_gradient(self, x: np.ndarray) -> np.ndarray:
-        """Approximate gradient as described in equation (8.7), called the 'central difference formula'.
+        return gradient_approximation(self.f, x)
+
+    def calc_hessian_at(self, x: np.ndarray) -> np.ndarray:
+        """ Calculate hessian at point `x`. Uses an approximation, if the hessian is not explicitly known.
 
         Args:
-            x (np.ndarray): Function input.
+            x (np.ndarray): Array representing some point in the domain of the function.
 
         Returns:
-            np.ndarray: Approximated gradient.
+            np.ndarray: (Approximated or true) gradient at point `x`.
         """
-        eps = self._find_epsilon(x)
-        eps_vectors = np.eye(N=len(x)) * eps
-        return np.array([
-            (self.f(x + eps_vector) - self.f(x - eps_vector)) / (2 * eps) for eps_vector in eps_vectors
-        ])
 
-    def calc_hessian_at(self,
-                        x: np.ndarray) -> np.ndarray:
-        return (self.hessian_f or self.hessian_approximation)(x)
+        if self.hessian_f:
+            # if the problem has knowledge about the hessian, use it directly without approximation
+            return self.hessian_f(x)
 
-    def hessian_approximation(self, x: np.ndarray) -> np.ndarray:
-        """Approximate Hessian based on equation (8.21) in the book.
-
-        Args:
-            x (np.ndarray): Point for which we approximate the function's Hessian.
-
-        Returns:
-            np.ndarray: Approximated Hessian.
-        """
-        eps = self._find_epsilon(x)
-        eps_vectors = np.eye(N=len(x)) * eps
-
-        hess = np.array([
-            [self._hess_approx_num(x, eps_i, eps_j) for eps_i in eps_vectors]
-            for eps_j in eps_vectors
-        ]) / (eps ** 2)
-
-        # If the hessian approximation is basically 0, we are already close.
-        # Avoids SingularMatrix errors.
-        if sum(abs(entry) for row in hess for entry in row) < 0.0001:
-            return np.eye(len(x))
-
-        return hess
-
-    def _hess_approx_num(self, x: np.ndarray, eps_i: np.ndarray, eps_j: np.ndarray) -> float:
-        f = self.f
-        return f(x + eps_i + eps_j) - f(x + eps_i) - f(x + eps_j) + f(x)
-
-    @staticmethod
-    def _find_epsilon(x: np.ndarray):
-        """Find computational error of the datatype of x and return it's square-root, as in equation (8.6).
-
-        Args:
-            x (np.ndarray): Array of which the datatype is considered.
-        """
-        try:
-            # Given the datatype of x, the below is the least number such that `1.0 + u != 1.0`.
-            u = np.finfo(x.dtype).eps
-
-        # x is an exact type, which throws an error; we use float64 instead, 
-        # as it is often the default when performing operations on ints which map to floats.
-        except (TypeError, ValueError):
-
-            u = np.finfo(np.float64).eps
-
-        epsilon = np.sqrt(u)
-
-        return epsilon
+        return hessian_approximation(self.f, x)
 
 
 @dataclass

@@ -4,17 +4,14 @@ from mpmath import matrix as mpmatrix
 from typing import Tuple
 
 
-def invert_matrix(A: np.ndarray, custom_matrix_inversion_enabled: bool) -> np.ndarray:
-    """Compute the inverse of a square matrix
+def invert_matrix(A: np.ndarray) -> np.ndarray:
+    """Compute the inverse of a square matrix using gaussian elimination with partial row pivoting.
+
+    See `Algorithm A.1` and `Wikipedia <https://en.wikipedia.org/wiki/LU_decomposition>`.
 
     :param A: A non-singular n-by-n matrix
-    :type A: numpy.ndarray
     :return: The inverse of ``A``
-    :rtype: numpy.ndarray
     """
-
-    if not custom_matrix_inversion_enabled:
-        return np.linalg.inv(A)
 
     if not isinstance(A, np.ndarray):
         raise TypeError("'A' must be of type numpy.ndarray")
@@ -34,15 +31,14 @@ def invert_matrix(A: np.ndarray, custom_matrix_inversion_enabled: bool) -> np.nd
 
     return X
 
+
 def _lup_decompose(A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """Compute the LU decomposition with partial pivoting (LUP) of a square matrix
 
     See `Algorithm A.1` and `Wikipedia <https://en.wikipedia.org/wiki/LU_decomposition>`.
 
-    :param A: ``A`` as described in :func:`invert`
-    :type A: numpy.ndarray
+    :param A: ``A`` as described in :func:`invert_matrix`
     :return: The combined lower and upper triangular n-by-n matrix, the n-by-n permutation matrix
-    :rtype: Tuple[np.ndarray, np.ndarray]
     """
 
     n = len(A)
@@ -68,11 +64,8 @@ def _lup_solve(LU: np.ndarray, B: np.ndarray) -> np.ndarray:
     """Solve a system of linear equations by forward and backward substitution
 
     :param LU: ``LU`` as returned by :func:`_lup_decompose`
-    :type LU: numpy.ndarray
     :param B: A n-by-m matrix
-    :type B: numpy.ndarray
     :return: The n-by-m solution matrix
-    :rtype: numpy.ndarray
     """
 
     n = len(LU)

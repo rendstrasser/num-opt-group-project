@@ -1,6 +1,7 @@
 import numpy as np
 from src.classes import MinimizationProblem, IterationState
 from src.matrix_inversion import invert_matrix
+from src.linear_systems import solve
 
 
 def newton_direction(
@@ -18,8 +19,10 @@ def newton_direction(
     """
 
     hessian = problem.calc_hessian_at(x)
-    hessian_inv = invert_matrix(hessian, problem.settings.custom_matrix_inversion_enabled)
     grad = problem.calc_gradient_at(x)
-    p = -hessian_inv @ grad
+
+    p = -solve(hessian, grad,
+               problem.settings.cholesky_linear_systems_solver_enabled,
+               problem.settings.gaussian_elimination_linear_systems_solver_enabled)
 
     return IterationState(x, p, grad)

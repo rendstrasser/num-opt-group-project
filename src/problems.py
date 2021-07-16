@@ -32,7 +32,7 @@ def create_quadratic_problem(n, random_state=None, settings=MinimizationProblemS
     A_generator = np.random.randint(low=1, high=10, size=(n, n))
 
     # If we want to degenerate the problem(interesting for testing variable scaling)
-    if settings.degenerate_problem:  # 
+    if settings.degenerate_problem:  #
         scaling_matrix = np.identity(A_generator.shape[0])  # initialize a scaling matrix
         scaling_matrix[0, 0] = 100  # set one element much larger than the others
         A_generator = scaling_matrix @ A_generator  # multiply with old A
